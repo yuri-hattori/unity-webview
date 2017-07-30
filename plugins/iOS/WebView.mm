@@ -125,6 +125,8 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
 }
 - (void)dispose;
 + (void)clearCookies;
++ (void)clearCaches;
++ (void)setNoCacheMode;
 @end
 
 @implementation CWebViewPlugin
@@ -159,11 +161,11 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
     }
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     webView.hidden = YES;
-    
+
     [webView addObserver:self forKeyPath: @"loading" options: NSKeyValueObservingOptionNew context:nil];
-    
+
     [view addSubview:webView];
-    
+
     return self;
 }
 
@@ -192,6 +194,18 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
     }];
 }
 
++(void)clearCaches
+{
+  [[NSURLCache sharedURLCache] removeAllCachedResponses];
+}
+
++(void)setNoCacheMode
+{
+  [CWebViewPlugin clearCaches];
+  [[NSURLCache sharedURLCache] setDiskCapacity:0];
+  [[NSURLCache sharedURLCache] setMemoryCapacity:0];
+}
+
 - (void)userContentController:(WKUserContentController *)userContentController
       didReceiveScriptMessage:(WKScriptMessage *)message {
 
@@ -217,14 +231,14 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
                        context:(void *)context {
     if (webView == nil)
         return;
-    
+
     if ([keyPath isEqualToString:@"loading"] && [[change objectForKey:NSKeyValueChangeNewKey] intValue] == 0
         && [webView URL] != nil) {
         UnitySendMessage(
                          [gameObjectName UTF8String],
                          "CallOnLoaded",
                          [[[webView URL] absoluteString] UTF8String]);
-        
+
     }
 }
 
@@ -434,14 +448,14 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
 {
     NSString *keyString = [NSString stringWithUTF8String:headerKey];
     NSString *valueString = [NSString stringWithUTF8String:headerValue];
-    
+
     [customRequestHeader setObject:valueString forKey:keyString];
 }
 
 - (void)removeCustomRequestHeader:(const char *)headerKey
 {
     NSString *keyString = [NSString stringWithUTF8String:headerKey];
-    
+
     if ([[customRequestHeader allKeys]containsObject:keyString]) {
         [customRequestHeader removeObjectForKey:keyString];
     }
@@ -459,7 +473,7 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
     if (!result) {
         return NULL;
     }
-    
+
     const char *s = [result UTF8String];
     char *r = (char *)malloc(strlen(s) + 1);
     strcpy(r, s);
@@ -485,6 +499,8 @@ extern "C" {
     void _CWebViewPlugin_RemoveCustomHeader(void *instance, const char *headerKey);
     void _CWebViewPlugin_ClearCustomHeader(void *instance);
     void _CWebViewPlugin_ClearCookies();
+    void _CWebViewPlugin_ClearCaches();
+    void _CWebViewPlugin_SetNoCacheMode();
     const char *_CWebViewPlugin_GetCustomHeaderValue(void *instance, const char *headerKey);
 }
 
@@ -592,10 +608,18 @@ void _CWebViewPlugin_ClearCookies()
     [CWebViewPlugin clearCookies];
 }
 
+void _CWebViewPlugin_ClearCaches()
+{
+    [CWebViewPlugin clearCaches];
+}
+
+void _CWebViewPlugin_SetNoCacheMode()
+{
+    [CWebViewPlugin setNoCacheMode];
+}
+
 const char *_CWebViewPlugin_GetCustomHeaderValue(void *instance, const char *headerKey)
 {
     CWebViewPlugin *webViewPlugin = (__bridge CWebViewPlugin *)instance;
     return [webViewPlugin getCustomRequestHeaderValue:headerKey];
 }
-
-
