@@ -1,15 +1,15 @@
 /*
  * Copyright (C) 2011 Keijiro Takahashi
  * Copyright (C) 2012 GREE, Inc.
- * 
+ *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
  * arising from the use of this software.
- * 
+ *
  * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would be
@@ -95,7 +95,7 @@ public class CWebViewPlugin {
                 return;
             }
             mCustomHeaders = new Hashtable<String, String>();
-            
+
             final WebView webView = new WebView(a);
             webView.setVisibility(View.GONE);
             webView.setFocusable(true);
@@ -395,7 +395,7 @@ public class CWebViewPlugin {
 
     public void ClearCookies()
     {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
            CookieManager.getInstance().removeAllCookies(null);
            CookieManager.getInstance().flush();
@@ -411,4 +411,32 @@ public class CWebViewPlugin {
         }
     }
 
+    public void ClearCaches()
+    {
+        final Activity a = UnityPlayer.currentActivity;
+        a.runOnUiThread(new Runnable() {public void run() {
+            if (mWebView == null) {
+                return;
+            }
+            else {
+                mWebView.clearCache(true);
+            }
+        }});
+    }
+
+    public void SetNoCacheMode()
+    {
+        final Activity a = UnityPlayer.currentActivity;
+        a.runOnUiThread(new Runnable() {public void run() {
+            if (mWebView == null) {
+                return;
+            }
+            else {
+                mWebView.clearCache(true);
+                
+                mWebView.getSettings().setAppCacheEnabled(false);
+                mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+            }
+        }});
+    }
 }
